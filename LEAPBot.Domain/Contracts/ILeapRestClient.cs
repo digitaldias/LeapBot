@@ -10,8 +10,13 @@ namespace LEAPBot.Domain.Contracts
     public interface ILeapRestClient
     {
         Task<IEnumerable<MasterClass>> GetMasterClasses();
+
         Task <IEnumerable<Speaker>> GetMasterClassSpeakers(int masterClassNumber);
+
         Task <IEnumerable<Speaker>> GetAllSpeakers();
+
         Task<Speaker> GetSpeakerByPartialName(string speakerName);
+
+        Task<MasterClass> GetMasterClassByTopic(string partialTopicName);
     }
 }

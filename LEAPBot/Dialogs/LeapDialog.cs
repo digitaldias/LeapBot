@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace LEAPBot.Dialogs
 {
-    [Serializable] 
+    [Serializable]
     public class LeapDialog : LuisDialog<object>
     {
         private const string helpMessage = "I have been designed to help you with information about our masterclasses. ";
@@ -22,14 +22,14 @@ namespace LEAPBot.Dialogs
         private MasterClass SelectedMasterclass = null;
 
 
-        public LeapDialog(LuisService service)            
+        public LeapDialog(LuisService service)
             : base(service)
-        {            
+        {
         }
 
         protected override Task MessageReceived(IDialogContext context, IAwaitable<IMessageActivity> item)
         {
-            if(!context.UserData.TryGetValue("username", out _username))
+            if (!context.UserData.TryGetValue("username", out _username))
             {
                 PromptDialog.Text(context, ResumeAfterPrompt, "Before we get started, please tell me your name?");
                 return Task.FromResult<object>(null);
@@ -43,17 +43,71 @@ namespace LEAPBot.Dialogs
             {
                 var name = await result;
                 await context.PostAsync($"Hello there, {name}! {helpMessage}");
-                _username = name;                
+                _username = name;
                 context.UserData.SetValue("username", name);
             }
-            catch(TooManyAttemptsException)
+            catch (TooManyAttemptsException)
             {
             }
             context.Wait(MessageReceived);
         }
 
 
-        [LuisIntent("WhoIsTalking?")]
+        [LuisIntent("GetMasterclassByTopic")]
+        public async Task GetMasterclassByTopic(IDialogContext context, LuisResult result)
+        {
+            EntityRecommendation entityRecommendation;
+            MasterClass masterClass = null;
+            if (result.TryFindEntity("TopicReference", out entityRecommendation) == false)
+            {
+                await context.PostAsync($"Sorry {_username}, but I couldn't figure out the topic you asked for.");
+            }
+            else
+            {
+                masterClass = await WebApiApplication
+                    .Container
+                    .GetInstance<ILeapRestClient>()
+                    .GetMasterClassByTopic(entityRecommendation.Entity);
+
+                if (masterClass == null)
+                {
+                    await context.PostAsync($"Sorry {_username}, but I couldn't find any masterclasses covering '{entityRecommendation.Entity}'");
+                }
+                else
+                {
+                    var reply = context.MakeMessage();
+                    reply.Text = "I found this masterclass for you: ";
+                    reply.Attachments.Add(ConvertMasterclassToHeroCardAttachment(masterClass));
+
+                    await context.PostAsync(reply);
+                }
+            }
+            context.Wait(MessageReceived);
+        }
+
+
+        [LuisIntent("ThankYou")]
+        public async Task ThankYou(IDialogContext context, LuisResult result)
+        {
+            var replies = new[] { "You're welcome!", "No problemo!", "I live to serve :-)", "De nada, Amigo", "Sure thing", "No problem man", "Pleasure was all mine", "Happy to oblige", "It's cool bro!" };
+            var random = new Random((int)DateTime.Now.Ticks);
+
+            int choice = random.Next(0, replies.Length - 1);
+
+            await context.PostAsync(replies[choice]);
+
+            context.Wait(MessageReceived);
+        }
+
+
+        [LuisIntent("SendingColleagues")]
+        public async Task SendingColleagues(IDialogContext context, LuisResult result)
+        {
+            await context.PostAsync("You can send a colleague if you're not able to attend yourself, or if you feel that he/she would have more use of the current topic. Make sure to contact us on [leap@microsoft.no](mailto:leap@microsoft.no) before doing so.");
+            context.Wait(MessageReceived);
+        }
+
+        [LuisIntent("WhoIsTalking")]
         public async Task WhoIsTalking(IDialogContext context, LuisResult result)
         {
             await context.PostAsync($"According to my records, you should be {_username}.");
@@ -66,7 +120,7 @@ namespace LEAPBot.Dialogs
             var reply = context.MakeMessage();
             reply.AttachmentLayout = AttachmentLayoutTypes.Carousel;
             reply.Text = "I believe these hotels are good choices for LEAP participants:";
-            
+
 
             foreach (var hotel in Hotel.Recommended)
             {
@@ -101,7 +155,7 @@ namespace LEAPBot.Dialogs
                 var speaker = await WebApiApplication.Container.GetInstance<ILeapRestClient>()
                     .GetSpeakerByPartialName(speakerNameRecommendation.Entity);
 
-                if(speaker == null)
+                if (speaker == null)
                 {
                     await context.PostAsync($"I'm sorry {_username}, but I was unable to find a masterclass speaker named '{speakerNameRecommendation.Entity}' ");
                 }
@@ -124,21 +178,21 @@ namespace LEAPBot.Dialogs
         [LuisIntent("GetMasterclassSpeaker")]
         public async Task GetMasterClassSpeaker(IDialogContext context, LuisResult result)
         {
-                var masterClasses = await WebApiApplication.Container.GetInstance<ILeapRestClient>().GetMasterClasses();
+            var masterClasses = await WebApiApplication.Container.GetInstance<ILeapRestClient>().GetMasterClasses();
 
-                var ro = masterClasses.Select(m => m.Number).ToList().AsReadOnly();
-                var rd = masterClasses.Select(m => m.Number + ": " + m.Title).ToList().AsReadOnly();
+            var ro = masterClasses.Select(m => m.Number).ToList().AsReadOnly();
+            var rd = masterClasses.Select(m => m.Number + ": " + m.Title).ToList().AsReadOnly();
 
-                var promptOptions = new PromptOptions<int>(
-                    "Just to make sure - For which masterclass do you want to know?",
-                    "Try again please? Type the number of the Masterclass",
-                    "I give up, too many attempts there",
-                    ro,
-                    3,
-                    new PromptStyler(PromptStyle.PerLine), 
-                    rd);
+            var promptOptions = new PromptOptions<int>(
+                "Just to make sure - For which masterclass do you want to know? (give me the number)",
+                "Try again please? Type the number of the Masterclass",
+                "I give up, too many attempts there",
+                ro,
+                3,
+                new PromptStyler(PromptStyle.PerLine),
+                rd);
 
-                PromptDialog.Choice(context, AfterAskingForMasterClassSpeaker, promptOptions);
+            PromptDialog.Choice(context, AfterAskingForMasterClassSpeaker, promptOptions);
         }
 
 
@@ -152,9 +206,9 @@ namespace LEAPBot.Dialogs
 
             var speakers = await WebApiApplication.Container.GetInstance<ILeapRestClient>().GetMasterClassSpeakers(masterClassNumber);
 
-            if(speakers.Count() >= 1)
+            if (speakers.Count() >= 1)
             {
-                var reply              = context.MakeMessage();
+                var reply = context.MakeMessage();
                 reply.Text = $"For masterclass #{masterClassNumber}, we have the following speaker(s) lined up:";
                 reply.AttachmentLayout = AttachmentLayoutTypes.Carousel;
                 reply.Attachments = CreateSpeakerCardAttachments(speakers);
@@ -165,8 +219,6 @@ namespace LEAPBot.Dialogs
             {
                 await context.PostAsync($"I'm so sorry, {_username}, but I couldn't find a speaker for masterclass {masterClassNumber}");
             }
-
-
             context.Wait(MessageReceived);
         }
 
@@ -190,7 +242,7 @@ namespace LEAPBot.Dialogs
         {
             var attachments = new List<Attachment>();
 
-            foreach(var speaker in speakers)
+            foreach (var speaker in speakers)
             {
                 var speakerImages = new List<CardImage> { new CardImage(speaker.Image, "Image of speaker") };
                 attachments.Add(new HeroCard(speaker.Name, speaker.IntroHeading, speaker.Bio, speakerImages).ToAttachment());
@@ -202,7 +254,7 @@ namespace LEAPBot.Dialogs
         [LuisIntent("Insult")]
         public async Task Insult(IDialogContext context, LuisResult result)
         {
-            await context.PostAsync($"{_username}, I do my best, but I'm only as smart as my code allows");
+            await context.PostAsync($"{_username}, I do my best, but I'm only as smart as my code allows.");
             context.Wait(MessageReceived);
         }
 
@@ -210,7 +262,7 @@ namespace LEAPBot.Dialogs
         [LuisIntent("BringingValuables")]
         public async Task BringingValuables(IDialogContext context, LuisResult result)
         {
-            await context.PostAsync("We have a wardrobe for storing your clothes and luggage. If you're concerned about your valuables, just reach out to one of the members of our team, and we will assist you");
+            await context.PostAsync("We have a wardrobe for storing your clothes and luggage. If you're concerned about your valuables, just reach out to one of the members of our team, and we will assist you - oh! And no pets/children please!");
             context.Wait(MessageReceived);
         }
 
@@ -218,7 +270,7 @@ namespace LEAPBot.Dialogs
         [LuisIntent("WhereToGetPresentations")]
         public async Task WhereToGetPresentations(IDialogContext context, LuisResult result)
         {
-            await context.PostAsync("Get your presentations in the LEAP portal by logging in...");
+            await context.PostAsync("You can find the presentations that the speakers have shared with us in the LEAP portal. You'll need to be signed in to download them");
             context.Wait(MessageReceived);
         }
 
@@ -233,7 +285,7 @@ namespace LEAPBot.Dialogs
                     new CardImage("https://leap.blob.core.windows.net/other/LEAPParking.png", "Map showing parking location")
                 });
 
-            var reply = context.MakeMessage();
+            var reply = context.MakeMessage();            
             reply.Attachments.Add(herocard.ToAttachment());
             await context.PostAsync(reply);
             context.Wait(MessageReceived);
@@ -275,7 +327,16 @@ namespace LEAPBot.Dialogs
         [LuisIntent("GetLastMasterclassDate")]
         public async Task GetLastMasterClassDate(IDialogContext context, LuisResult result)
         {
-            await context.PostAsync("The last LEAP masterclass will take place on ###. The topic will be TTTT");
+            var allMasterClasses = await WebApiApplication.Container.GetInstance<ILeapRestClient>()
+                .GetMasterClasses();
+
+            var lastMasterClass = allMasterClasses.OrderBy(mc => mc.Number).Last();
+
+            var reply = context.MakeMessage();
+            reply.Text = "This is our last masterclass:";
+            reply.Attachments.Add(ConvertMasterclassToHeroCardAttachment(lastMasterClass));
+
+            await context.PostAsync(reply);
             context.Wait(MessageReceived);
         }
 
@@ -318,15 +379,15 @@ namespace LEAPBot.Dialogs
             var heroCard = new HeroCard(
                 "What are LEAP Masterclasses?",
                 "Masterclasses are monthly in-depth sessions on a specified topic",
-                "blablabla",
-                new List<CardImage> { cardImage}                
+                "",
+                new List<CardImage> { cardImage }
                 );
 
             var replyMessage = context.MakeMessage();
             replyMessage.Attachments.Add(heroCard.ToAttachment());
 
             await context.PostAsync(replyMessage);
-            
+
             context.Wait(MessageReceived);
         }
 
@@ -342,32 +403,15 @@ namespace LEAPBot.Dialogs
         [LuisIntent("ListMasterclasses")]
         public async Task ListMasterClasses(IDialogContext context, LuisResult result)
         {
-            
-            var allMasterClasses = await WebApiApplication.Container.GetInstance<ILeapRestClient>().GetMasterClasses();
+            var allMasterClasses   = await WebApiApplication.Container.GetInstance<ILeapRestClient>().GetMasterClasses();
+            var reply              = context.MakeMessage();
+            reply.Text             = "Here are the planned masterclasses";
+            reply.AttachmentLayout = AttachmentLayoutTypes.Carousel;
 
-            var receiptCard = new ReceiptCard
-            {
-                Title = "MasterClasses this season",
-                Facts = new List<Fact> {
-                    new Fact ("Number of sessions", allMasterClasses.Count().ToString())
-                },
-                Items = new List<ReceiptItem>(allMasterClasses.Select(m => new ReceiptItem($"{m.Number + 1}: {m.Date.ToString("dd MMM yyyy")}" , m.Title))),
-                Buttons = new List<CardAction>
-                {
-                    new CardAction (
-                        ActionTypes.OpenUrl,
-                        "More information",
-                        null,
-                        "https://leap.microsoft.no/Masterclasses"
-                        )
-                }
-            };
+            foreach (var masterclass in allMasterClasses)
+                reply.Attachments.Add(ConvertMasterclassToHeroCardAttachment(masterclass));
 
-            var message = context.MakeMessage();
-            message.Attachments.Add(receiptCard.ToAttachment());
-
-            await context.PostAsync(message);
-
+            await context.PostAsync(reply);
             context.Wait(MessageReceived);
         }
 
@@ -387,7 +431,11 @@ namespace LEAPBot.Dialogs
 
             var nextMasterClass = masterClasses.OrderBy(m => m.Date).FirstOrDefault(m => m.Date >= DateTime.Now.Date);
 
-            await context.PostAsync($"The next LEAP masterclass, entitled '{nextMasterClass.Title}' will take place on {nextMasterClass.Date.ToString("dddd, dd MMM")}\n\n{nextMasterClass.Description}");
+            var reply = context.MakeMessage();
+            reply.Text = "Here is the next masterclass:";
+            reply.Attachments.Add(ConvertMasterclassToHeroCardAttachment(nextMasterClass));
+
+            await context.PostAsync(reply);
             context.Wait(MessageReceived);
         }
 
@@ -425,6 +473,33 @@ namespace LEAPBot.Dialogs
         {
             await context.PostAsync(helpMessage);
             context.Wait(MessageReceived);
+        }
+
+        private Attachment ConvertMasterclassToHeroCardAttachment(MasterClass masterClass)
+        {
+            var currentYear = GetCurrentYear();
+
+
+            var heroCard = new HeroCard
+            {
+                Title = masterClass.Title,
+                Subtitle = masterClass.Date.ToString("dddd, dd MMMM"),
+                Text = masterClass.Description,
+                Images = new List<CardImage> { new CardImage($"https://leap.microsoft.no/Content/images/MasterClasses/{currentYear}/{masterClass.Number + 1}.png") },
+                Buttons = new List<CardAction> { new CardAction(ActionTypes.OpenUrl, "View online", null, "https://leap.microsoft.no/masterclasses") }
+            };
+            return heroCard.ToAttachment();
+        }
+
+        private int GetCurrentYear()
+        {
+            var year = DateTime.Now.Year;
+            var month = DateTime.Now.Month;
+
+            if (month >= 6 && month <= 12)
+                return year + 1;
+            else
+                return year;
         }
     }
 }

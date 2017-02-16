@@ -94,6 +94,22 @@ namespace LEAPBot.Data.RestClient
         }
 
 
+        public async Task<MasterClass> GetMasterClassByTopic(string partialTopicName)
+        {
+            if (string.IsNullOrEmpty(partialTopicName))
+                return null;
+
+            var client = CreateApiClient();
+            var uri = new Uri(_baseUrl + "MasterClasses/ByTopic/" + partialTopicName);
+            var response = await client.GetAsync(uri);
+            if (!response.IsSuccessStatusCode)
+                return null;
+
+            var jsonString = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<MasterClass>(jsonString);
+        }
+
+
         private HttpClient CreateApiClient()
         {
             var client = new HttpClient();

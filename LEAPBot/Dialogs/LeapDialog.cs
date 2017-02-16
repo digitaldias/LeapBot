@@ -14,13 +14,10 @@ namespace LEAPBot.Dialogs
     [Serializable]
     public class LeapDialog : LuisDialog<object>
     {
-        private const string helpMessage = "I have been designed to help you with information about our masterclasses. ";
-
+        private const string helpMessage = "I have been designed to help you with information about our masterclasses. ";        
         private string _username;
 
-
         private MasterClass SelectedMasterclass = null;
-
 
         public LeapDialog(LuisService service)
             : base(service)
@@ -110,7 +107,7 @@ namespace LEAPBot.Dialogs
         [LuisIntent("WhoIsTalking")]
         public async Task WhoIsTalking(IDialogContext context, LuisResult result)
         {
-            await context.PostAsync($"According to my records, you should be {_username}.");
+            await context.PostAsync($"According to my records, your name should be {_username}.");
             context.Wait(MessageReceived);
         }
 
@@ -120,7 +117,6 @@ namespace LEAPBot.Dialogs
             var reply = context.MakeMessage();
             reply.AttachmentLayout = AttachmentLayoutTypes.Carousel;
             reply.Text = "I believe these hotels are good choices for LEAP participants:";
-
 
             foreach (var hotel in Hotel.Recommended)
             {
@@ -133,7 +129,6 @@ namespace LEAPBot.Dialogs
                 };
                 reply.Attachments.Add(heroCard.ToAttachment());
             }
-
             await context.PostAsync(reply);
             context.Wait(MessageReceived);
         }
@@ -144,7 +139,6 @@ namespace LEAPBot.Dialogs
         {
             EntityRecommendation speakerNameRecommendation;
             var speakerNameFound = result.TryFindEntity("SpeakerReference", out speakerNameRecommendation);
-
 
             if (!speakerNameFound)
             {
@@ -170,7 +164,6 @@ namespace LEAPBot.Dialogs
                     await context.PostAsync(reply);
                 }
             }
-
             context.Wait(MessageReceived);
         }
 
@@ -199,12 +192,9 @@ namespace LEAPBot.Dialogs
         private async Task AfterAskingForMasterClassSpeaker(IDialogContext context, IAwaitable<int> result)
         {
             var masterClassNumber = await result;
-
-            var masterClasses = await WebApiApplication.Container.GetInstance<ILeapRestClient>().GetMasterClasses();
-
-            SelectedMasterclass = masterClasses.FirstOrDefault(m => m.Number == masterClassNumber);
-
-            var speakers = await WebApiApplication.Container.GetInstance<ILeapRestClient>().GetMasterClassSpeakers(masterClassNumber);
+            var masterClasses     = await WebApiApplication.Container.GetInstance<ILeapRestClient>().GetMasterClasses();
+            SelectedMasterclass   = masterClasses.FirstOrDefault(m => m.Number == masterClassNumber);
+            var speakers          = await WebApiApplication.Container.GetInstance<ILeapRestClient>().GetMasterClassSpeakers(masterClassNumber);
 
             if (speakers.Count() >= 1)
             {
@@ -226,14 +216,13 @@ namespace LEAPBot.Dialogs
         [LuisIntent("ListAllSpeakers")]
         public async Task ListAllSpeakers(IDialogContext context, LuisResult result)
         {
-            var speakers = await WebApiApplication.Container.GetInstance<ILeapRestClient>().GetAllSpeakers();
-            var reply = context.MakeMessage();
+            var speakers           = await WebApiApplication.Container.GetInstance<ILeapRestClient>().GetAllSpeakers();
+            var reply              = context.MakeMessage();
             reply.AttachmentLayout = AttachmentLayoutTypes.Carousel;
-            reply.Text = "The following speakers are planned for our masterclasses:";
-            reply.Attachments = CreateSpeakerCardAttachments(speakers);
+            reply.Text             = "The following speakers are planned for our masterclasses:";
+            reply.Attachments      = CreateSpeakerCardAttachments(speakers);
 
             await context.PostAsync(reply);
-
             context.Wait(MessageReceived);
         }
 
@@ -303,7 +292,6 @@ namespace LEAPBot.Dialogs
         public async Task DoINeedAPC(IDialogContext context, LuisResult result)
         {
             await context.PostAsync("You will not need a PC to attend the masterclass");
-
             context.Wait(MessageReceived);
         }
 
@@ -387,15 +375,14 @@ namespace LEAPBot.Dialogs
             replyMessage.Attachments.Add(heroCard.ToAttachment());
 
             await context.PostAsync(replyMessage);
-
             context.Wait(MessageReceived);
         }
 
 
         [LuisIntent("GetParticipantCount")]
         public async Task GetParticipantCount(IDialogContext context, LuisResult result)
-        {
-            await context.PostAsync("There are 3 people on LEAP this year");
+        {            
+            await context.PostAsync($"I'm sorry, {_username}, that is classified :-)");
             context.Wait(MessageReceived);
         }
 
@@ -412,13 +399,6 @@ namespace LEAPBot.Dialogs
                 reply.Attachments.Add(ConvertMasterclassToHeroCardAttachment(masterclass));
 
             await context.PostAsync(reply);
-            context.Wait(MessageReceived);
-        }
-
-
-        private async Task OnMasterClassSelected(IDialogContext context, IAwaitable<string> result)
-        {
-            await context.PostAsync("Yes yes");
             context.Wait(MessageReceived);
         }
 
@@ -451,7 +431,32 @@ namespace LEAPBot.Dialogs
         [LuisIntent("GetMasterclassLocation")]
         public async Task GetMasterClassLocation(IDialogContext context, LuisResult result)
         {
-            await context.PostAsync("Each masterclass will take place in Vika Kino, near the 'Nationaltheateret' train and subway station. \nThere are parking houses nearby.\nWe also ask our speakers to stream the meeting over Skype for Business, in case you're unable to physically attend the masterclass.\n");
+            await context.PostAsync("Each masterclass will take place in our Microsoft Office, near the 'Lysaker' train and subway station. \nThere are parking houses nearby.\nWe also ask our speakers to stream the meeting over Skype for Business, in case you're unable to physically attend the masterclass.\n");
+            context.Wait(MessageReceived);
+        }
+
+
+        [LuisIntent("OrderTaxi")]
+        public async Task OrderTaxi(IDialogContext context, LuisResult result)
+        {
+            var reply = context.MakeMessage();
+            reply.Text = "Sure! Getting a Taxi is fairly straigthtforward:";
+
+            var heroCard = new HeroCard {
+                Title = "Asker og Bærum Taxi",
+                Subtitle = "For ordering a regular taxi 1-4 persons. For maxiTaxi, or special needs, call 06710",
+                Images = new List<CardImage> { new CardImage("http://www.06710.no/s/defaultweb/AB-taxi-logo.jpg?w=150&bg=ffffff") },
+                Buttons = new List<CardAction> {
+                    new CardAction {
+                        Title = "Order Online",
+                        Type = ActionTypes.OpenUrl,
+                        Value = "http://www.06710.no/bestill-taxi"
+                    }
+                }
+            };
+            reply.Attachments.Add(heroCard.ToAttachment());
+
+            await context.PostAsync(reply);
             context.Wait(MessageReceived);
         }
 
@@ -472,6 +477,14 @@ namespace LEAPBot.Dialogs
         public async Task GetHelp(IDialogContext context, LuisResult result)
         {
             await context.PostAsync(helpMessage);
+            context.Wait(MessageReceived);
+        }
+
+
+        [LuisIntent("GetMasterclassCost")]
+        public async Task GetMasterclassCost(IDialogContext context, LuisResult result)
+        {
+            await context.PostAsync("LEAP masterclasses are part of the LEAP program which is a paid program, however, if you are already signed up on LEAP, there is no additional cost for attending our masterclasses - naturally!");
             context.Wait(MessageReceived);
         }
 

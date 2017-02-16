@@ -1,0 +1,54 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LEAPBot", "LEAPBot\LEAPBot.csproj", "{A8BA1066-5695-4D71-ABB4-65E5A5E0C3D4}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "10 Presentation Layer", "10 Presentation Layer", "{27E53AC5-DC30-440E-B337-932F04D7BA55}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "30 Domain Layer", "30 Domain Layer", "{44383F9E-3571-40B1-B8D9-5192F6FD6075}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "40 Data Layer", "40 Data Layer", "{54D1674B-590A-4A3B-A546-289BA1A6CED0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LEAPBot.Domain", "LEAPBot.Domain\LEAPBot.Domain.csproj", "{BFA2D822-BC4F-40A4-9674-0900E01A9130}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "20 Business Layer", "20 Business Layer", "{F7356E0C-1086-4FE7-9D54-4C29CCCAF7FC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LEAPBot.Business", "LEAPBot.Business\LEAPBot.Business.csproj", "{436977F1-224B-4594-8447-10AF2852EF6F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LEAPBot.Data.RestClient", "LEAPBot.Data.RestClient\LEAPBot.Data.RestClient.csproj", "{C8147BCC-9ABC-4C59-90A4-49178EE22851}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A8BA1066-5695-4D71-ABB4-65E5A5E0C3D4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A8BA1066-5695-4D71-ABB4-65E5A5E0C3D4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A8BA1066-5695-4D71-ABB4-65E5A5E0C3D4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A8BA1066-5695-4D71-ABB4-65E5A5E0C3D4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BFA2D822-BC4F-40A4-9674-0900E01A9130}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BFA2D822-BC4F-40A4-9674-0900E01A9130}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BFA2D822-BC4F-40A4-9674-0900E01A9130}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BFA2D822-BC4F-40A4-9674-0900E01A9130}.Release|Any CPU.Build.0 = Release|Any CPU
+		{436977F1-224B-4594-8447-10AF2852EF6F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{436977F1-224B-4594-8447-10AF2852EF6F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{436977F1-224B-4594-8447-10AF2852EF6F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{436977F1-224B-4594-8447-10AF2852EF6F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C8147BCC-9ABC-4C59-90A4-49178EE22851}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C8147BCC-9ABC-4C59-90A4-49178EE22851}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C8147BCC-9ABC-4C59-90A4-49178EE22851}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C8147BCC-9ABC-4C59-90A4-49178EE22851}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{A8BA1066-5695-4D71-ABB4-65E5A5E0C3D4} = {27E53AC5-DC30-440E-B337-932F04D7BA55}
+		{BFA2D822-BC4F-40A4-9674-0900E01A9130} = {44383F9E-3571-40B1-B8D9-5192F6FD6075}
+		{436977F1-224B-4594-8447-10AF2852EF6F} = {F7356E0C-1086-4FE7-9D54-4C29CCCAF7FC}
+		{C8147BCC-9ABC-4C59-90A4-49178EE22851} = {54D1674B-590A-4A3B-A546-289BA1A6CED0}
+	EndGlobalSection
+EndGlobal

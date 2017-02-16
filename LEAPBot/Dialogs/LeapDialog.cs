@@ -53,6 +53,38 @@ namespace LEAPBot.Dialogs
         }
 
 
+        [LuisIntent("WhoIsTalking?")]
+        public async Task WhoIsTalking(IDialogContext context, LuisResult result)
+        {
+            await context.PostAsync($"According to my records, you should be {_username}.");
+            context.Wait(MessageReceived);
+        }
+
+        [LuisIntent("GetHotelRecommendations")]
+        public async Task GetHotelRecommendations(IDialogContext context, LuisResult result)
+        {
+            var reply = context.MakeMessage();
+            reply.AttachmentLayout = AttachmentLayoutTypes.Carousel;
+            reply.Text = "I believe these hotels are good choices for LEAP participants:";
+            
+
+            foreach (var hotel in Hotel.Recommended)
+            {
+                var heroCard = new HeroCard
+                {
+                    Text = hotel.Name,
+                    Subtitle = hotel.Description,
+                    Images = new List<CardImage> { new CardImage(hotel.ImageUrl, "Hotel Image") },
+                    Buttons = new List<CardAction> { new CardAction(ActionTypes.OpenUrl, "View more", null, hotel.HomepageUrl) }
+                };
+                reply.Attachments.Add(heroCard.ToAttachment());
+            }
+
+            await context.PostAsync(reply);
+            context.Wait(MessageReceived);
+        }
+
+
         [LuisIntent("GetSpeakerTopics")]
         public async Task GetSpeakerTopics(IDialogContext context, LuisResult result)
         {
@@ -88,6 +120,7 @@ namespace LEAPBot.Dialogs
             context.Wait(MessageReceived);
         }
 
+
         [LuisIntent("GetMasterclassSpeaker")]
         public async Task GetMasterClassSpeaker(IDialogContext context, LuisResult result)
         {
@@ -107,6 +140,7 @@ namespace LEAPBot.Dialogs
 
                 PromptDialog.Choice(context, AfterAskingForMasterClassSpeaker, promptOptions);
         }
+
 
         private async Task AfterAskingForMasterClassSpeaker(IDialogContext context, IAwaitable<int> result)
         {
@@ -151,6 +185,7 @@ namespace LEAPBot.Dialogs
             context.Wait(MessageReceived);
         }
 
+
         private IList<Attachment> CreateSpeakerCardAttachments(IEnumerable<Speaker> speakers)
         {
             var attachments = new List<Attachment>();
@@ -163,12 +198,14 @@ namespace LEAPBot.Dialogs
             return attachments;
         }
 
+
         [LuisIntent("Insult")]
         public async Task Insult(IDialogContext context, LuisResult result)
         {
             await context.PostAsync($"{_username}, I do my best, but I'm only as smart as my code allows");
             context.Wait(MessageReceived);
         }
+
 
         [LuisIntent("BringingValuables")]
         public async Task BringingValuables(IDialogContext context, LuisResult result)
@@ -177,12 +214,14 @@ namespace LEAPBot.Dialogs
             context.Wait(MessageReceived);
         }
 
+
         [LuisIntent("WhereToGetPresentations")]
         public async Task WhereToGetPresentations(IDialogContext context, LuisResult result)
         {
             await context.PostAsync("Get your presentations in the LEAP portal by logging in...");
             context.Wait(MessageReceived);
         }
+
 
         [LuisIntent("GetParkingInstructions")]
         public async Task GetParkingInstructions(IDialogContext context, LuisResult result)
@@ -199,6 +238,7 @@ namespace LEAPBot.Dialogs
             await context.PostAsync(reply);
             context.Wait(MessageReceived);
         }
+
 
         [LuisIntent("WhatToDoWhenSick")]
         public async Task WhatToDoWhenSick(IDialogContext context, LuisResult result)
@@ -248,6 +288,7 @@ namespace LEAPBot.Dialogs
             context.Wait(MessageReceived);
         }
 
+
         [LuisIntent("GeneralLeapInformation")]
         public async Task GeneralLeapInformation(IDialogContext context, LuisResult result)
         {
@@ -289,6 +330,7 @@ namespace LEAPBot.Dialogs
             context.Wait(MessageReceived);
         }
 
+
         [LuisIntent("GetParticipantCount")]
         public async Task GetParticipantCount(IDialogContext context, LuisResult result)
         {
@@ -329,19 +371,26 @@ namespace LEAPBot.Dialogs
             context.Wait(MessageReceived);
         }
 
+
         private async Task OnMasterClassSelected(IDialogContext context, IAwaitable<string> result)
         {
             await context.PostAsync("Yes yes");
             context.Wait(MessageReceived);
         }
 
+
         [LuisIntent("GetNextMasterclassDate")]
         public async Task GetNextMasterClass(IDialogContext context, LuisResult result)
         {
+            var masterClasses = await WebApiApplication.Container.GetInstance<ILeapRestClient>()
+                .GetMasterClasses();
 
-            await context.PostAsync("The next LEAP masterclass, entitled 'AAAA' will take place on ###, it will be about XXXX");
+            var nextMasterClass = masterClasses.OrderBy(m => m.Date).FirstOrDefault(m => m.Date >= DateTime.Now.Date);
+
+            await context.PostAsync($"The next LEAP masterclass, entitled '{nextMasterClass.Title}' will take place on {nextMasterClass.Date.ToString("dddd, dd MMM")}\n\n{nextMasterClass.Description}");
             context.Wait(MessageReceived);
         }
+
 
         [LuisIntent("SpecialFoodOfferings")]
         public async Task SpecialFoodOfferings(IDialogContext context, LuisResult result)
@@ -350,12 +399,14 @@ namespace LEAPBot.Dialogs
             context.Wait(MessageReceived);
         }
 
+
         [LuisIntent("GetMasterclassLocation")]
         public async Task GetMasterClassLocation(IDialogContext context, LuisResult result)
         {
             await context.PostAsync("Each masterclass will take place in Vika Kino, near the 'Nationaltheateret' train and subway station. \nThere are parking houses nearby.\nWe also ask our speakers to stream the meeting over Skype for Business, in case you're unable to physically attend the masterclass.\n");
             context.Wait(MessageReceived);
         }
+
 
         [LuisIntent("GetNextMasterclassTopic")]
         public async Task GetNextMasterTopic(IDialogContext context, LuisResult result)

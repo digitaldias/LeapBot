@@ -130,6 +130,7 @@
     <Compile Include="App_Start\WebApiConfig.cs" />
     <Compile Include="Contracts\SettingsReader.cs" />
     <Compile Include="Controllers\MessagesController.cs" />
+    <Compile Include="Dialogs\Hotel.cs" />
     <Compile Include="Dialogs\LeapDialog.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>

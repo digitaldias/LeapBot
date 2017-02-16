@@ -1,0 +1,9 @@
+{
+    "LUIS:AppName" : "[Your LUIS Application name]",
+    "LUIS:AppId"   : "[LUIS Application ID]",
+    "LUIS:AppKey"  : "[LUIS Secret/password]",
+
+    "LEAP:BaseUrl" : "[BASE Url of your WebApi]",
+    "LEAP:ApiKey"  : "[API Key to use for authentication]",
+    "LEAP:Secret"  : "[Secret password to use in request header]"
+}

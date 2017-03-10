@@ -6,6 +6,7 @@ using Microsoft.Bot.Builder.Luis.Models;
 using Microsoft.Bot.Connector;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -104,6 +105,7 @@ namespace LEAPBot.Dialogs
             context.Wait(MessageReceived);
         }
 
+
         [LuisIntent("WhoIsTalking")]
         public async Task WhoIsTalking(IDialogContext context, LuisResult result)
         {
@@ -174,7 +176,7 @@ namespace LEAPBot.Dialogs
             var masterClasses = await WebApiApplication.Container.GetInstance<ILeapRestClient>().GetMasterClasses();
 
             var ro = masterClasses.Select(m => m.Number).ToList().AsReadOnly();
-            var rd = masterClasses.Select(m => m.Number + ": " + m.Title).ToList().AsReadOnly();
+            var rd = masterClasses.Select(m => (m.Number + 1) + ": " + m.Title + " ("+ m.Date.ToString("dddd, MMMM dd", new CultureInfo("en-US")) +")").ToList().AsReadOnly();
 
             var promptOptions = new PromptOptions<int>(
                 "Just to make sure - For which masterclass do you want to know? (give me the number)",

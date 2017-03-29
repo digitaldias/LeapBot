@@ -12,6 +12,8 @@ namespace LEAPBot.Contracts
 {
     public class SettingsReader : ISettingsReader
     {
+        private JObject _json;
+
 
         public string this[string index]
         {
@@ -26,8 +28,12 @@ namespace LEAPBot.Contracts
             }
         }
 
+
         private string GetByLocalJsonFile(string index)
         {
+            if(_json != null)
+                return json[index].Value<string>();
+
             var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "LeapBotSettings.Json");
             if (!File.Exists(path))
                 return string.Empty;
@@ -36,7 +42,7 @@ namespace LEAPBot.Contracts
             if (string.IsNullOrEmpty(fileContent))
                 return string.Empty;
 
-            var json = JObject.Parse(fileContent);
+            _json = JObject.Parse(fileContent);
 
             if (!json.HasValues)
                 return string.Empty;

@@ -23,12 +23,14 @@ namespace LEAPBot
         private static Container _container;
         private static readonly LuisService _service;
 
+
         static MessagesController()
         {
             _container = new Container(new RuntimeRegistry());
+            var settings = _container.GetInstance<ISettingsReader>();
 
-            var appId   = _container.GetInstance<ISettingsReader>()["LUIS:AppId"];
-            var appKey  = _container.GetInstance<ISettingsReader>()["LUIS:AppKey"];
+            var appId   = settings["LUIS:AppId"];
+            var appKey  = settings["LUIS:AppKey"];
             var model   = new LuisModelAttribute(appId, appKey);
             _service    = new LuisService(model);
         }
@@ -47,6 +49,7 @@ namespace LEAPBot
             var response = Request.CreateResponse(HttpStatusCode.OK);
             return response;
         }
+
 
         private Activity HandleSystemMessage(Activity message)
         {

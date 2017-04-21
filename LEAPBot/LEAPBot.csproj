@@ -126,8 +126,12 @@
     <Compile Include="App_Start\WebApiConfig.cs" />
     <Compile Include="Contracts\SettingsReader.cs" />
     <Compile Include="Controllers\MessagesController.cs" />
+    <Compile Include="Dialogs\FoodDialog.cs" />
     <Compile Include="Dialogs\Hotel.cs" />
     <Compile Include="Dialogs\LeapDialog.cs" />
+    <Compile Include="Dialogs\MasterClassDialog.cs" />
+    <Compile Include="Dialogs\RootDialog.cs" />
+    <Compile Include="Dialogs\TravelDialog.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>

@@ -3,6 +3,7 @@ using Microsoft.Bot.Builder.Luis;
 using Microsoft.Bot.Builder.Luis.Models;
 using Microsoft.Bot.Connector;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace LEAPBot.Dialogs
@@ -22,6 +23,27 @@ namespace LEAPBot.Dialogs
         }
 
 
+        [LuisIntent("GeneralLeapInformation")]
+        public async Task GeneralLeapInformation(IDialogContext context, LuisResult result)
+        {
+            var reply = context.MakeMessage();
+
+            var heroCard = new HeroCard(
+                "What is LEAP you say?",
+                "Lead Enterprise Architecture Program is a program for software and solution architects who are seeking the best possible professional training, delivered from Microsoft Norway in our headquarters in Redmond, Seattle. ",
+                "LEAP addresses the most important Microsoft technologies and the relationship between these technologies and business challenges. Microsoft’s vision, mission, strategy and roadmap are also part of the program. ",
+                new List<CardImage> {
+                    new CardImage("https://leap.microsoft.no/Content/Images/LeapImage.png", "LEAP Logo")
+                }, null,
+                new CardAction(ActionTypes.OpenUrl, "Learn more", null, "https://leap.microsoft.no"));
+
+            reply.Attachments.Add(heroCard.ToAttachment());
+
+            await context.PostAsync(reply);
+            context.Wait(MessageReceivedAsync);
+        }
+
+
         [LuisIntent("SendingColleagues")]
         public async Task SendingColleagues(IDialogContext context, LuisResult result)
         {
@@ -38,13 +60,6 @@ namespace LEAPBot.Dialogs
         }
 
 
-        [LuisIntent("WillMasterclassBeStreamed")]
-        public async Task WillMasterClassBeStreamed(IDialogContext context, LuisResult result)
-        {
-            await context.PostAsync("We will be streaming each of the masterclasses using Skype for business. \nContact us via email (leap@microsoft.com) to get an invitation!");
-
-            context.Wait(MessageReceivedAsync);
-        }
 
 
         [LuisIntent("GetParticipantCount")]

@@ -1,15 +1,30 @@
-﻿using Microsoft.Bot.Builder.Dialogs;
+﻿using LEAPBot.Domain.Contracts;
+using Microsoft.Bot.Builder.Dialogs;
+using Microsoft.Bot.Builder.Luis;
 using Microsoft.Bot.Builder.Luis.Models;
 using Microsoft.Bot.Connector;
 using System;
-using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace LEAPBot.Dialogs
 {
+    [Serializable]
     public class RootDialog : IDialog<object>
     {
         private const string helpMessage = "I have been designed to help you with information about our LEAP masterclasses";
+        private readonly LuisService _luisService;
+
+
+        public RootDialog()
+        {
+            var settings = WebApiApplication.Container.GetInstance<ISettingsReader>();
+
+            var luisModel = new LuisModelAttribute(settings["LUIS:Topics:AppId"], settings["LUIS:Topics:AppKey"]);
+            _luisService = new LuisService(luisModel);
+        }
+
 
         public async Task StartAsync(IDialogContext context)
         {
@@ -17,19 +32,41 @@ namespace LEAPBot.Dialogs
             context.Wait(MessageReceivedAsync);
         }
 
+
         private async Task MessageReceivedAsync(IDialogContext context, IAwaitable<IMessageActivity> result)
         {
             var messageActivity = await result;
 
             if (messageActivity.Text.Contains("help"))
             {
-                await ShowHelpAsync(context);
-                context.Wait(MessageReceivedAsync);
+                await ShowHelpAsync(context);                
             }
-            else
+
+            var luisResult = await _luisService.QueryAsync(messageActivity.Text, CancellationToken.None);                
+            await HandleTopScoringIntentAsync(context, luisResult, messageActivity);                
+        }
+
+
+        public async Task HandleTopScoringIntentAsync(IDialogContext context, LuisResult luisResult, IMessageActivity messageActivity)
+        {
+            var intent = luisResult.TopScoringIntent;
+
+            switch(intent.Intent)
             {
-                await context.PostAsync("Hello, I'm Leapbot. \nI can help you with information about the LEAP masterclasses. Just give me a try!");
+                case "LEAP":
+                    await HandleLEAPQuestionAsync(context, luisResult, messageActivity);
+                    break;
+
+                case "Greeting":
+                    await SayHello(context, luisResult);
+                    break;
             }
+        }
+
+
+        private async Task AfterIntentDialogAsync(IDialogContext context, IAwaitable<object> result)
+        {
+            var final = await result;
             context.Wait(MessageReceivedAsync);
         }
 
@@ -40,6 +77,31 @@ namespace LEAPBot.Dialogs
             await context.PostAsync("I am sorry, but I didn't understand your question.");
             context.Wait(MessageReceivedAsync);
         }
+
+
+        public async Task HandleLEAPQuestionAsync(IDialogContext context, LuisResult luisResult, IMessageActivity messageActivity)
+        {
+            var intent = luisResult.TopScoringIntent;
+            if (intent.Intent == "LEAP")
+            {
+                var entity = luisResult.Entities.OrderByDescending(e => e.Score).FirstOrDefault();
+                if (entity == null)
+                {
+                    await context.PostAsync("Oh, I didn't quite catch what topic you wanted to adress there!");
+                    return;
+                }
+                switch (entity.Entity)
+                {
+                    case "leap":
+                        break;
+                    case "masterclass":
+                    case "masterclasses":
+                        await context.Forward(new MasterClassDialog(), AfterIntentDialogAsync, messageActivity, CancellationToken.None);
+                        break;
+                }
+            }            
+        }
+
 
         [LuisIntent("GreetBot")]
         public async Task SayHello(IDialogContext context, LuisResult result)
@@ -66,50 +128,10 @@ namespace LEAPBot.Dialogs
         [LuisIntent("Insult")]
         public async Task Insult(IDialogContext context, LuisResult result)
         {
-            await context.PostAsync($"{_username}, I do my best, but I'm only as smart as my code allows.");
+            await context.PostAsync($"Hey! I do my best, but I'm only as smart as my code allows.");
             context.Wait(MessageReceivedAsync);
         }
-
-
-        [LuisIntent("ExplainMasterclasses")]
-        public async Task ExplainMasterClasses(IDialogContext context, LuisResult result)
-        {
-            var cardImage = new CardImage("https://leap.microsoft.no/Content/Images/LeapImage.png", "Leap Logo");
-            var heroCard = new HeroCard(
-                "What are LEAP Masterclasses?",
-                "Masterclasses are monthly in-depth sessions on a specified topic",
-                "",
-                new List<CardImage> { cardImage }
-                );
-
-            var replyMessage = context.MakeMessage();
-            replyMessage.Attachments.Add(heroCard.ToAttachment());
-
-            await context.PostAsync(replyMessage);
-            context.Wait(MessageReceivedAsync);
-        }
-
-
-        [LuisIntent("GeneralLeapInformation")]
-        public async Task GeneralLeapInformation(IDialogContext context, LuisResult result)
-        {
-            var reply = context.MakeMessage();
-
-            var heroCard = new HeroCard(
-                "What is LEAP you say?",
-                "Lead Enterprise Architecture Program is a program for software and solution architects who are seeking the best possible professional training, delivered from Microsoft Norway in our headquarters in Redmond, Seattle. ",
-                "LEAP addresses the most important Microsoft technologies and the relationship between these technologies and business challenges. Microsoft’s vision, mission, strategy and roadmap are also part of the program. ",
-                new List<CardImage> {
-                    new CardImage("https://leap.microsoft.no/Content/Images/LeapImage.png", "LEAP Logo")
-                }, null,
-                new CardAction(ActionTypes.OpenUrl, "Learn more", null, "https://leap.microsoft.no"));
-
-            reply.Attachments.Add(heroCard.ToAttachment());
-
-            await context.PostAsync(reply);
-            context.Wait(MessageReceivedAsync);
-        }
-
+      
 
         private async Task ShowHelpAsync(IDialogContext context)
         {

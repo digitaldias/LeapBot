@@ -31,23 +31,27 @@ namespace LEAPBot.Contracts
 
         private string GetByLocalJsonFile(string index)
         {
-            if(_json != null)
-                return json[index].Value<string>();
+            if(_json == null)
+                LoadJsonFromUserProfileFolder();
 
+            if (!_json.HasValues)
+                return string.Empty;
+
+            return _json[index].Value<string>();
+        }
+
+
+        private void LoadJsonFromUserProfileFolder()
+        {
             var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "LeapBotSettings.Json");
             if (!File.Exists(path))
-                return string.Empty;
+                return;
 
             var fileContent = File.ReadAllText(path);
             if (string.IsNullOrEmpty(fileContent))
-                return string.Empty;
+                return;
 
             _json = JObject.Parse(fileContent);
-
-            if (!json.HasValues)
-                return string.Empty;
-
-            return json[index].Value<string>();
         }
     }
 }

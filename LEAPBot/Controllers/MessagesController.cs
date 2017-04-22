@@ -1,46 +1,22 @@
-﻿using System;
-using System.Linq;
+﻿using LEAPBot.Dialogs;
+using Microsoft.Bot.Builder.Dialogs;
+using Microsoft.Bot.Connector;
+using StructureMap;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Web.Http;
-using System.Web.Http.Description;
-using Microsoft.Bot.Connector;
-using Newtonsoft.Json;
-using System.Configuration;
-using StructureMap;
-using LEAPBot.IoC;
-using LEAPBot.Domain.Contracts;
-using Microsoft.Bot.Builder.Dialogs;
-using LEAPBot.Dialogs;
-using Microsoft.Bot.Builder.Luis;
 
 namespace LEAPBot
 {
     [BotAuthentication]
     public class MessagesController : ApiController
     {
-        private static Container _container;
-        private static readonly LuisService _service;
-
-
-        static MessagesController()
-        {
-            _container = new Container(new RuntimeRegistry());
-            var settings = _container.GetInstance<ISettingsReader>();
-
-            var appId   = settings["LUIS:AppId"];
-            var appKey  = settings["LUIS:AppKey"];
-            var model   = new LuisModelAttribute(appId, appKey);
-            _service    = new LuisService(model);
-        }
-
-
         public async Task<HttpResponseMessage> Post([FromBody]Activity activity)
         {
             if (activity.Type == ActivityTypes.Message)
             {
-                await Conversation.SendAsync(activity, () => new LeapDialog(_service));
+                await Conversation.SendAsync(activity, () => new RootDialog());
             }
             else
             {
